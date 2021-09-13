@@ -3,12 +3,10 @@ import time
 import hashlib
 from abc import ABC, abstractmethod
 from pathlib import Path
-import logging
-import inspect
 import configparser
-from chatbot.chatapi import chat_api
+from chatbot.pychatbot.chatapi import chat_api
 import requests
-import os
+import logging
 
 
 class WorkChatApi(ABC):
@@ -53,11 +51,12 @@ class WorkChatApi(ABC):
         pass
 
     @abstractmethod
-    def get_usersid(self, *args, **kwargs):
+    def get_users_id(self, *args, **kwargs):
         pass
 
 
-tokenp = Path.cwd().joinpath(".token.conf")
+tokenp = Path.cwd().joinpath(".token")
+logging.basicConfig(level=logging.INFO, format=("%(asctime)s  [%(levelname)s]  %(message)s"))
 
 
 class HandlerTool:
@@ -65,14 +64,16 @@ class HandlerTool:
     处理类，封装请求，处理请求以及请求闭环。为上层接口提供处理逻辑
     """
 
-    def __init__(self, corpid, corpsecret, agentid):
+    def __init__(self, corpid=None, corpsecret=None, agentid=None, **kwargs):
         self.corpid = corpid
         self.corpsecret = corpsecret
         self.agentid = agentid
-        self._op = hashlib.md5(bytes(self.corpsecret + self.corpid, encoding='utf-8')).hexdigest()
-        self.token = None
-        self.conf = configparser.ConfigParser()
+        self._op = None
         self.url = 'https://qyapi.weixin.qq.com'
+        self.conf = configparser.ConfigParser()
+        self.judgment_type(corpid, corpsecret, agentid, **kwargs)
+        self.token = self.get_token()
+
 
     @staticmethod
     def is_image(file):
@@ -97,10 +98,47 @@ class HandlerTool:
         if not (file.is_file() and (5 <= file.stat().st_size <= 10 * 1024 * 1024)):
             raise TypeError({"Code": "ERROR", "message": '普通文件不合法, 请检查文件类型或文件大小(5B~10M)'})
 
-    def file_check(self, filetype, path):
+    def judgment_type(self, corpid, corpsecret, agentid, path=Path.cwd().joinpath('.chatkey.conf')):
+
+        # 传入cid，Path未传就直接返回,若其中一个为None 则报错。
+        # 传入path, cid 未传。 判断path是否是一个正常的文件若不是 则报错
+        # 未传入cid,path，则检查默认目录是否存在chatkey.info 有就读，无则创建
+
+        if corpid and corpsecret and agentid:
+            self.agentid = corpid
+            self.corpsecret = corpsecret
+            self.agentid = agentid
+
+        elif corpid or corpsecret or agentid:
+
+            raise TypeError({"Code": 'ERROR', "message": 'corpid, corpsecret, agentid 参数有误, 请检查'})
+
+        else:
+            if Path(path).is_file():
+                self.conf.read(path, encoding="utf-8")
+                self.corpid = self.conf.get("chatinfo", "corpid")
+                self.corpsecret = self.conf.get("chatinfo", "corpsecret")
+                self.agentid = self.conf.get("chatinfo", "agentid")
+                self.conf.clear()
+
+            elif path != Path.cwd().joinpath('.chatkey.conf'):
+                raise TypeError({"Code": 'ERROR', "message": '传入的路径不是一个正常的文件，请检查'})
+
+            else:
+                self.corpid = input("请输入corpid:\n").strip()
+                self.corpsecret = input("请输入corpsecret:\n").strip()
+                self.agentid = input("请输入agentid:\n").strip()
+                self.get_token()
+                with open(str(path), 'w', encoding="utf-8") as fp:
+                    self.conf["chatinfo"] = {"corpid": self.corpid, "corpsecret": self.corpsecret,
+                                             "agentid": self.agentid}
+                    self.conf.write(fp)
+                    self.conf.clear()
+
+    def file_check(self, file_type, path):
         """
         验证上传文件是否符合标准
-        :param filetype: 文件类型(image,voice,video,file)
+        :param file_type: 文件类型(image,voice,video,file)
         :param path:
         :return:
         """
@@ -108,19 +146,13 @@ class HandlerTool:
         p = Path(path)
         filetypes = {"image": self.is_image, "voice": self.is_voice, "video": self.is_video, "file": self.is_file}
 
-        try:
+        chack_type = filetypes.get(file_type, None)
 
-            chack_type = filetypes.get(filetype, None)
+        if not chack_type:
+            raise TypeError({"Code": 'ERROR', "message": '不支持的文件类型，请检查文件类型(image,voice,video,file)'})
 
-            if not chack_type:
-                raise TypeError({"Code": 'ERROR', "message": '不支持的文件类型，请检查文件类型(image,voice,video,file)'})
-            chack_type(p)
-
-            return {"file": (p.name, p.read_bytes())}
-
-        except TypeError as e:
-            print(e)
-            exit()
+        chack_type(p)
+        return {"file": (p.name, p.read_bytes())}
 
     def _get(self, uri, **kwargs):
         """
@@ -129,10 +161,17 @@ class HandlerTool:
         :param kwargs: 需要带入的参数
         :return:
         """
+
         try:
             rsp = requests.get(self.url + uri, **kwargs)
             rsp.raise_for_status()
-            return rsp.json()
+            result = rsp.json()
+            if result.get("errcode") == 0:
+                return result
+
+            elif result.get("errcode") == 40013 or result.get("errcode") == 40001:
+                raise ValueError({"Code": result.get("errcode"), "message": "输入的corpid 或 corpsecret错误请检查"})
+
         except requests.RequestException as e:
             return e
 
@@ -144,27 +183,26 @@ class HandlerTool:
         :return:
         """
         try:
-            self.get_token()
-            requrl = self.url + uri
+            url = self.url + uri
             for i in range(2):
-                rsp = requests.post(requrl.format(self.token), **kwargs)
+                rsp = requests.post(url.format(self.token), **kwargs)
                 rsp.raise_for_status()
                 result = rsp.json()
 
                 if result.get("errcode") == 0:
-                    print("消息发送成功")
                     return result
 
                 elif result.get("errcode") == 42001 or result.get("errcode") == 40014:
-                    self.get_token()
+                    logging.info('token失效，重新获取')
+                    self.token = self._get_token()
 
                 else:
-                    print(f'消息发送失败！原因:{rsp}')
+                    logging.warning(f'消息发送失败！原因:{rsp.text}')
                     break
 
-        except requests.exceptions.HTTPError as httperror:
+        except requests.exceptions.HTTPError as HTTPError:
             raise requests.exceptions.HTTPError(
-                f"发送失败， HTTP error:{httperror.response.status_code} , 原因: {httperror.response.reason}")
+                f"发送失败， HTTP error:{HTTPError.response.status_code} , 原因: {HTTPError.response.reason}")
 
         except requests.exceptions.ConnectionError:
             raise requests.exceptions.ConnectionError("发送失败，HTTP connection error!")
@@ -175,38 +213,6 @@ class HandlerTool:
         except requests.exceptions.RequestException:
             raise requests.exceptions.RequestException("发送失败, Request Exception!")
 
-    def _writ_token(self, type, txt, path):
-        """
-        持久化token
-        :param type: ini 文件中的父索引
-        :param txt: 写入的数据信息
-        :param path: 文件保存的目录
-        :return:
-        """
-        try:
-            self.conf[type] = txt
-            with open(path, "w", encoding='utf-8') as fp:
-                self.conf.write(fp)
-                print('token 写入成功')
-        except Exception as e:
-            print(e)
-            exit()
-
-    # def _check_token(self):
-    #     """
-    #     确认本地token时限，以及判断本地是否存在token文件没有则自动获取
-    #     :return:
-    #     """
-    #
-    #     if not (self.corpid and self.corpsecret and self.agentid):
-    #         raise IOError("未传入corpid, corpsecret, agentid")
-    #
-    #     if not self.conf.has_section('AccessToken') or int(time.time()) > int(
-    #             self.conf.get("AccessToken", "timeout")):
-    #         self.token = self.get_token()
-    #     else:
-    #         self.token = self.conf.get("AccessToken", "token")
-
     def get_token(self):
         """
         获取token
@@ -214,119 +220,123 @@ class HandlerTool:
         """
 
         # 先读文件如果没有就发起请求并写入文件返回，有就判断timeout失效就发起请求并写入文件返回，时效正常直接返回
+        self._op = hashlib.md5(bytes(self.corpsecret + self.corpid, encoding='utf-8')).hexdigest()
 
         if tokenp.is_file():
             self.conf.read(tokenp, encoding="utf-8")
+
             try:
-                if int(time.time()) > int(self.conf.get(self._op, "tokenout")):
-                    gettoken_url = chat_api.get("GET_ACCESS_TOKEN").format(self.corpid, self.corpsecret)
-                    rsp = self._get(gettoken_url)
-                    tokeninfo = {"token": rsp.get("access_token"),
-                                 "tokenout": str(int(time.time()) + rsp.get("expires_in"))}
-                    self._writ_token(self._op, tokeninfo, tokenp)
-                    self.token = rsp.get("access_token")
-                    return rsp.get("access_token")
-                return self.conf.get(self._op, "token")
+                if not int(time.time()) > int(self.conf.get(self._op, "tokenout")):
+                    return self.conf.get(self._op, "token")
 
-            except configparser.NoSectionError:
-                print({"Code": 'ERROR', "message": '未读取到 {} 请检查token文件是否存在该节点'.format(self._op)})
+                logging.info("token失效，重新获取...")
+            except (configparser.NoSectionError, configparser.NoOptionError):
+                logging.warning({"Code": 'ERROR', "message": f'未读取到 {self._op} 节点或节点下的tokenout, 重新获取..'})
 
-            except configparser.NoOptionError:
-                print({"Code": 'ERROR', "message": f'未读取到 tokenout 请检查 {self._op} 节点下是否存在tokenout'})
+            except ValueError:
+                logging.warning({"Code": 'ERROR', "message": f'请检查 {self._op} 下 tokenout 节点数据为空， 重新获取覆盖'})
 
-        else:
+        return self._get_token()
 
-            access_token = chat_api.get("GET_ACCESS_TOKEN").format(self.corpid, self.corpsecret)
-            rsp = self._get(access_token)
-            tokeninfo = {"token": rsp.get("access_token"), "tokenout": str(int(time.time()) + rsp.get("expires_in"))}
-            self._writ_token(self._op, tokeninfo, tokenp)
-            self.token = rsp.get("access_token")
-            return rsp.get("access_token")
+    def _get_token(self):
 
-    def send_message(self, msgtype, message, users=None, departments=None, tags=None):
+        tokenurl = chat_api.get("GET_ACCESS_TOKEN").format(self.corpid, self.corpsecret)
+        rsp = self._get(tokenurl)
+
+        tokeninfo = {"token": rsp.get("access_token"), "tokenout": str(int(time.time()) + rsp.get("expires_in"))}
+
+        self.conf[self._op] = tokeninfo
+        try:
+            with open(str(tokenp), "w", encoding='utf-8') as fp:
+                self.conf.write(fp)
+                self.conf.clear()
+                logging.info('token持久化成功..')
+
+        except Exception as e:
+            logging.error(e)
+            logging.warning({"Code": 'ERROR', "message": "token持久化失败, 请根据报错进行排查(不影响请求)"})
+
+        return rsp.get("access_token")
+
+    def send_message(self, message_type, message, touser=None, todept=None, totags=None):
         """
-
-        :param msgtype:
-        :param message:
-        :param users:
-        :param departments:
-        :param tags:
+        发送消息的主要接口封装和发起请求
+        :param message_type: 发送消息的类型
+        :param message: 发送消息的内容
+        :param touser: 发送到具体的用户，当此参数为@all时，忽略todept,totags 参数并发送到全部人，此参数默认为@all
+        用户名用 | 拼接。最多支持100个
+        :param todept: 发送到部门，当tousers为默认@all 此参数会被忽略.部门之间用 | 拼接。最多支持100个
+        :param totags: 发送到标签的用用户,当tousers为默认@all 此参数会被忽略. 标签之间用 | 拼接.最多支持100个
         :return:
         """
         data = {
-            "msgtype": msgtype,
+            "msgtype": message_type,
             "agentid": self.agentid,
-            msgtype: message
+            message_type: message
         }
 
-        if users:
-            data["touser"] = users
+        if not (touser or todept or totags):
+            data["touser"] = "@all"
 
-        if departments:
-            data["toparty"] = departments
+        else:
+            if touser:
+                data["touser"] = touser
 
-        if tags:
-            data["totag"] = tags
+            if todept:
+                data["toparty"] = todept
+
+            if totags:
+                data["totag"] = totags
 
         # 判断是否需要上传
-        if msgtype in ("image", "voice", "video", "file"):
+        if message_type in ("image", "voice", "video", "file"):
             filepath = message.get("media_id")
 
-            media_id = self.upload_media(msgtype, filepath)
+            media_id = self.upload_media(message_type, filepath)
             message["media_id"] = media_id
 
         self._post(chat_api.get('MESSAGE_SEND'), data=json.dumps(data))
+        logging.info(f"发送 {message_type} 消息成功...")
 
-    def upload_media(self, filetype, path):
-        '''
-        上传临时素材
-        :return:
-        '''
+    def upload_media(self, file_type, path):
+        """
+        上传临时素材， 3天有效期
+        :param file_type: 文件类型
+        :param path: 文件路径
+        :return: media_id
+        """
 
-        fileinfo = self.file_check(filetype, path)
-        rsp = self._post(chat_api.get("MEDIA_UPLOAD").format("{}", filetype), files=fileinfo)
+        fileinfo = self.file_check(file_type, path)
+        rsp = self._post(chat_api.get("MEDIA_UPLOAD").format("{}", file_type), files=fileinfo)
         return rsp.get("media_id")
 
-    def upload_image(self, photopath, enable=True):
-        '''
+    def upload_image(self, picture_path, enable=True):
+        """
         上传图片，返回图片url，url永久有效
         图片大小：图片文件大小应在 5B ~ 2MB 之间
-        :param photopath:  图片路径
+        :param picture_path:  图片路径
         :param enable:  是否开启上传记录
-
         :return: 图片url，永久有效
-        '''
+        """
 
-        p_imag = Path(photopath)
+        p_imag = Path(picture_path)
 
         if not p_imag.is_file() or p_imag.stat().st_size > 2 * 1024 * 1024 or p_imag.stat().st_size <= 5:
-            raise TypeError({"error": '404', "message": '指向的文件不是一个正常的图片或图片大小未在5B ~ 2MB之间',
+            raise TypeError({"error": 'ERROR', "message": '指向的文件不是一个正常的图片或图片大小未在5B ~ 2MB之间',
                              "massage": f"{p_imag.name}: {p_imag.stat().st_size} B"})
         files = {"file": p_imag.read_bytes(), "filename": p_imag.name}
 
         rsp = self._post(chat_api.get("IMG_UPLOAD"), files=files)
+        logging.info("图片上传成功...")
         if enable:
             with open('./imagesList.txt', "a+", encoding='utf-8') as fp:
-                fp.write(f"{p_imag.name}: {rsp.get('url')}")
+                fp.write(f"{p_imag.name}: {rsp.get('url')}\n")
 
         return rsp.get("url")
 
-    # def get_usersid(self, data):
-    #
-    #
-    #
-    #     data["access_token"] = self.token
-    #
-    #     rsp_users = self._get(chat_api.get('GET_USERS'), params=data)
-    #
-    #     for i in rsp_users.get("userlist"):
-    #         print(i)
+    def get_users_id(self, data):
+        data["access_token"] = self.token
+        rsp_users = self._get(chat_api.get('GET_USERS'), params=data)
+        for i in rsp_users.get("userlist"):
+            logging.info(i)
 
-
-if __name__ == '__main__':
-    # HandlerTool().upload_media(r"\work_chat\image\girl.jpg")
-    # HandlerTool.is_image()
-    # HandlerTool.is_image()
-    print(Path.cwd().joinpath("token.json"))
-    # app.get_token()
-    # app._check_token()
