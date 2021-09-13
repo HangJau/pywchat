@@ -4,7 +4,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from pathlib import Path
 import configparser
-from chatbot.pychatbot.chatapi import chat_api
+from pychatbot.chatapi import chat_api
 import requests
 import logging
 
