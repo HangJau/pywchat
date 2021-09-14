@@ -4,15 +4,45 @@
 项目是根据企业微信可与微信进行互通的前提，通过操作企业微信的开放API达到将消息通知到微信.只封装了**微信能够接收的信息类型**以及上传临时素材等一些辅助接口. 
 要使用该项目请先自己注册一个企业微信(无需认证) 注册文档
 
+### 项目相关文档
+
+​		**项目地址** ：https://github.com/HangJau/pychatbot.git
+
+​		**企业微信API**：[ 企业微信API (qq.com)](https://work.weixin.qq.com/api/doc/90000/90135/90236)
+
+### 项目实现	
+
+1. 已实现配置信息进行初始化.
+
+2. 已实现对token的离线保存，以及token失效的自动获取.
+
+3. 已实现对[text](#send_text)、[image](#send_image)、[voice](#send_voice)、[video](#send_video)、[file](#send_file)、[textcard](#send_textcard)、[graphic](#send_graphic)、[upload_image](#upload_image)、[get_user_id](#get_user_id)消息的发送封装.
+
+4. 已实现对错误返回的处理.
+
+  
+
+### 项目下载		
+
+```
+pip install pychatbot	
+```
 
 
-### 项目实现
-    1. 已实现配置信息进行初始化.
-    2、已实现对token的离线保存，以及token失效的自动获取.
-    3、已实现对text、image、voice、video、file、textcard、graphic、upload_iamge消息的发送封装.
-    4、已实现对错误返回的处理.
+
+### 三种初始化方法
+
+    第一种：直接传入，只会在当前路径生成一个.token文件
+    app = Sender(corpid,corpsecret,agentid)
+    
+    第二种：传入配置文件路径.读取配置并在当前路径生成一个.token文件(理论上文件也可无后缀且能读取成text即可，格式可参考配置介绍)
+    app = Sender(path=r"G:\chat\conf.ini")
+    
+    第三种：不传任何参. 动态输入所需的corpid,corpsecret,agentid,并在当前路径生成一个.chatkey,.token两个文件
+    app = Sender()
 
 
+​    
 
 ### 配置介绍
 
@@ -34,22 +64,11 @@
 
 ​    
 
-### 三种初始化方法
-    第一种：直接传入，只会在当前路径生成一个.token文件
-    app = Sender(corpid,corpsecret,agentid)
-    
-    第二种：传入配置文件路径.读取配置并在当前路径生成一个.token文件(理论上文件也可无后缀且能读取成text即可，格式可参考配置介绍)
-    app = Sender(path=r"G:\chat\conf.ini")
-    
-    第三种：不传任何参. 动态输入所需的corpid,corpsecret,agentid,并在当前路径生成一个.chatkey,.token两个文件
-    app = Sender()
-
-
-​    
-
 ### 消息发送
 
-#### send_text    
+
+
+#### <span id="send_text">send_text</span>
 
       发送纯文本消息，支持换行、以及A标签，大小最长不超过2048字节
       
@@ -70,7 +89,7 @@
 
 
 
-#### send_image
+#### <span id="send_image">send_image</span>
 
       发送纯图片消息，仅支持jpg,png格式，大小5B~2M
       接收的多个用户用 | 拼接
@@ -82,15 +101,15 @@
            app.send_image(r"G:\caht\image.jpg", touser="ZhuRen|user1")
            app.send_image(r"G:\caht\image.jpg", todept="1|2")
            app.send_image(r"G:\caht\image.jpg", totags="A")
-    
            
       tips:
       		默认为touser=@all, 发送全体用户，注意指定接收对象
       		接收的多个用户用 | 拼接
 
 
+​         
 
-#### send_voice
+#### <span id="send_voice">send_voice</span>
 
       发送语音消息，仅支持amr格式，大小5B~2M
       
@@ -109,7 +128,7 @@
 
 
 
-#### send_video
+#### <span id="send_video">send_video</span>
 
       发送视频消息，仅支持MP4格式的视频消息，大小5B~10M
       
@@ -130,7 +149,7 @@
 
 
 
-#### send_file
+#### <span id="send_file">send_file</span>
 
       发送文件消息, 大小5B~10M
       
@@ -151,7 +170,7 @@
 
 
 
-#### send_textcard
+#### <span id="send_textcard">send_textcard</span>
 
       发送文字卡片消息，点击卡片后跳转到设定的链接
       
@@ -177,7 +196,7 @@
 
 
 
-#### send_graphic
+#### <span id="send_graphic">send_graphic</span>
 
 ```
   发送图文卡片消息，点击卡片后跳转到设定的链接
@@ -203,7 +222,7 @@
 
 
 
-#### upload_image
+#### <span id="upload_image">upload_image</span>
 
       上传图片，返回图片链接，永久有效，主要用于图文消息卡片imag_link参数
       图片大小：图片文件大小应在 5B ~ 2MB 之间
@@ -223,12 +242,11 @@
 
 
 
-#### get_user_id
+#### <span id="get_user_id">get_user_id</span>   
 
       通过部门id获取部门下的员工信息
-     
-      
-      参数：
+    
+    参数：
            departmentid: 部门id.根部门默认为 1
            fetch_child: 是否递归子部门下的员工信息，默认为0，不递归
       
@@ -242,7 +260,5 @@
 
 
 
-可参考文档：
 
-企业微信API：[ 企业微信API (qq.com)](https://work.weixin.qq.com/api/doc/90000/90135/90236)
 
