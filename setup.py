@@ -7,7 +7,7 @@ setuptools.setup(
     name="pychatbot",
     version="1.0.0",
     author="Hangjau",
-    author_email="xxxx@qq.com",
+    author_email="hangjau818@gmail.com",
     description="Custom WeChat push information database",
     long_description=long_description,
     long_description_content_type="text/markdown",
