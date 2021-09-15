@@ -25,7 +25,7 @@
 ### 项目下载		
 
 ```
-pip install pychatbot	
+pip install pywchat	
 ```
 
 
