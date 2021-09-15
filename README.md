@@ -6,7 +6,7 @@
 
 ### 项目相关文档
 
-​		**项目地址** ：https://github.com/HangJau/pychatbot.git
+​		**项目地址** ：https://github.com/HangJau/pywchat.git
 
 ​		**企业微信API**：[ 企业微信API (qq.com)](https://work.weixin.qq.com/api/doc/90000/90135/90236)
 
