@@ -1,4 +1,4 @@
-from pychatbot.workhandler import WorkChatApi, HandlerTool
+from .workhandler import WorkChatApi, HandlerTool
 
 
 class Sender(WorkChatApi):
