@@ -29,7 +29,10 @@
 pip install pywchat	
 ```
 
-
+### 导入包
+```
+from pywchat import Sender
+```
 
 ### 三种初始化方法
 
