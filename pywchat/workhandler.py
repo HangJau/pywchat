@@ -1,4 +1,4 @@
-import json
+import sys
 import time
 import hashlib
 from abc import ABC, abstractmethod
@@ -198,7 +198,7 @@ class HandlerTool:
 
                 else:
                     logging.warning(f'消息发送失败！原因:{rsp.text}')
-                    break
+                    sys.exit()
 
         except requests.exceptions.HTTPError as HTTPError:
             raise requests.exceptions.HTTPError(
@@ -295,7 +295,7 @@ class HandlerTool:
             media_id = self.upload_media(message_type, filepath)
             message["media_id"] = media_id
 
-        self._post(chat_api.get('MESSAGE_SEND'), data=json.dumps(data))
+        self._post(chat_api.get('MESSAGE_SEND'), json=data)
         logging.info(f"发送 {message_type} 消息成功...")
 
     def upload_media(self, file_type, path):
