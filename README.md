@@ -44,6 +44,11 @@ from pywchat import Sender
     
     第三种：不传任何参. 动态输入所需的corpid,corpsecret,agentid,并在当前路径生成一个.chatkey,.token两个文件
     app = Sender()
+    
+####tips:
+    corpid: str
+    corpsecret: str
+    agentid: int
 
 
 ​    
