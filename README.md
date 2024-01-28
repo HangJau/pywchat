@@ -24,8 +24,14 @@
 
 ### 项目下载		
 
-```
+```python
 pip install pywchat	
+```
+
+### 项目导入
+
+```python
+from pywchat import Sender
 ```
 
 
@@ -254,7 +260,7 @@ pip install pywchat
            get_userid(1)
            
       tips:
-      		该方法只输出不进行返回.
+      		该方法会输出并返回用户.
       		默认为touser=@all, 发送全体用户，注意指定接收对象
       		接收的多个用户用 | 拼接
 
