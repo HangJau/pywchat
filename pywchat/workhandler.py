@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-import sys
->>>>>>> 9d8371233afca6b6e1eab1a2a97cb6d261446f9a
 import time
 import hashlib
 from abc import ABC, abstractmethod
