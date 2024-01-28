@@ -2,7 +2,8 @@
 ### 项目介绍
 
 项目是根据企业微信可与微信进行互通的前提，通过操作企业微信的开放API达到将消息通知到微信.只封装了**微信能够接收的信息类型**以及上传临时素材等一些辅助接口. 
-要使用该项目请先自己注册一个企业微信(无需认证) 注册文档
+要使用该项目请先自己注册一个企业微信(无需认证) [注册文档](https://mp.weixin.qq.com/s/EIw_kdNFzrJjDarEzN6-gA
+)
 
 ### 项目相关文档
 
@@ -46,6 +47,14 @@ from pywchat import Sender
     
     第三种：不传任何参. 动态输入所需的corpid,corpsecret,agentid,并在当前路径生成一个.chatkey,.token两个文件
     app = Sender()
+    
+#### tips:
+
+    corpid: str
+    
+    corpsecret: str
+    
+    agentid: int
 
 
 ​    
