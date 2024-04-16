@@ -52,7 +52,10 @@ class WorkChatApi(ABC):
     @abstractmethod
     def get_users_id(self, *args, **kwargs):
         pass
-
+        
+    @abstractmethod
+    def get_user_id_by_email(self, *args, **kwargs):
+        pass
 
 tokenp = Path.cwd().joinpath(".token")
 logging.basicConfig(level=logging.INFO, format=("%(asctime)s  [%(levelname)s]  %(message)s"))
@@ -342,3 +345,11 @@ class HandlerTool:
             logging.info(i)
 
         return users_info
+
+    def get_user_id_by_email(self, data):
+        data["access_token"] = self.token
+        rsp_users = self._get(chat_api.get('GET_USERID_EMAIL'), params=data)
+        user_id = rsp_users.get("userid")
+        logging.info(user_id)
+
+        return user_id
