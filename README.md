@@ -17,7 +17,7 @@
 
 2. 已实现对token的离线保存，以及token失效的自动获取.
 
-3. 已实现对[text](#send_text)、[image](#send_image)、[voice](#send_voice)、[video](#send_video)、[file](#send_file)、[textcard](#send_textcard)、[graphic](#send_graphic)、[upload_image](#upload_image)、[get_user_id](#get_user_id)消息的发送封装.
+3. 已实现对[text](#send_text)、[image](#send_image)、[voice](#send_voice)、[video](#send_video)、[file](#send_file)、[textcard](#send_textcard)、[graphic](#send_graphic)、[upload_image](#upload_image)、[get_user_id](#get_user_id)、[get_user_id_by_email](#get_user_id_by_email)消息的发送封装.
 
 4. 已实现对错误返回的处理.
 
