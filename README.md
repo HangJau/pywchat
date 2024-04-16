@@ -89,7 +89,7 @@ from pywchat import Sender
       
       参数：
            message: 需要发送的消息
-           kwargs:  可选择发送对象，tousers(用户), todept(部门), totags(标签用户)可同时填入,默认touser=@all
+           kwargs:  可选择发送对象，touser(用户), todept(部门), totags(标签用户)可同时填入,默认touser=@all
            
       例：
            app.send_text("又有一个富婆看了你的帅照啦..", touser="ZhuRen|user1")
@@ -110,7 +110,7 @@ from pywchat import Sender
       接收的多个用户用 | 拼接
       参数：
            iamge_path: 发送图片的本地路径
-           kwargs:  可选择发送对象，tousers(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
+           kwargs:  可选择发送对象，touser(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
     
       例：
            app.send_image(r"G:\caht\image.jpg", touser="ZhuRen|user1")
@@ -130,7 +130,7 @@ from pywchat import Sender
       
       参数：
            voice_path: 发送语音文件的本地路径
-           kwargs:  可选择发送对象，tousers(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
+           kwargs:  可选择发送对象，touser(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
     
       例：
            app.send_voice(r"G:\caht\语音.amr", touser="ZhuRen|user1")
@@ -149,7 +149,7 @@ from pywchat import Sender
       
       参数：
            video_path: 发送视频文件的本地路径
-           kwargs:  可选择发送对象，tousers(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
+           kwargs:  可选择发送对象，touser(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
     
       例：
            app.send_video(r"G:\caht\视频.mp4", touser="ZhuRen|user1")
@@ -170,7 +170,7 @@ from pywchat import Sender
       
       参数：
            file_path: 发送文件的本地路径
-           kwargs:  可选择发送对象，tousers(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
+           kwargs:  可选择发送对象，touser(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
     
       例：
            app.send_file(r"G:\caht\富婆联系表.xlsx", touser="ZhuRen|user1")
@@ -194,7 +194,7 @@ from pywchat import Sender
            desc: 描述，不超过512个字节，超过会自动截断
            link: 点击后跳转的链接。最长2048字节，请确保包含了协议头(http/https)
            btn: 按钮文字。 默认为“详情”， 不超过4个文字，超过自动截断.
-           kwargs: 可选择发送对象，tousers(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
+           kwargs: 可选择发送对象，touser(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
        
       例：
            app.send_textcard("富婆任务通知", "2021年10月24日\n您关注的富婆发布了最新的任务.","https://www.RichWoman.com/task/1",touser="ZhuRen")
@@ -221,7 +221,7 @@ from pywchat import Sender
        desc: 描述，不超过512个字节，超过会自动截断
        link: 点击后跳转的链接。最长2048字节，请确保包含了协议头(http/https)
        image_link: 卡片中显示图片的url.如何获取参考(upload_iamge)
-       kwargs: 可选择发送对象，tousers(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
+       kwargs: 可选择发送对象，touser(用户), todept(部门), totags(标签用户)可同时填入,默认为发送全部人
        
   例：
        app.send_graphic("富婆动态通知", "您关注的富婆发布了最新的照片.", "https://www.RichWoman.com/dynamic/1/", "https://www.RichWoman.com/dynamic/1/photos/fp.jpg", touser="ZhuRen|user1")
@@ -270,10 +270,19 @@ from pywchat import Sender
            
       tips:
       		该方法会输出并返回用户.
-      		默认为touser=@all, 发送全体用户，注意指定接收对象
-      		接收的多个用户用 | 拼接
 
-
+#### <span id="get_user_id_by_email">get_user_id_by_email</span> 
+     通过email获取员工信息
+    
+    参数：
+           email: 邮箱账号
+           email_type: 邮箱类型 1：企业 2：个人，默认为1
+      
+      例：
+           get_user_id_by_email("test@cloub.com")
+           
+      tips:
+      		该方法会返回用户信息.
 
 
 

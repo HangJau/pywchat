@@ -135,9 +135,7 @@ class Sender(WorkChatApi):
         params = {"department_id": department_id, "fetch_child": fetch_child}
         self._Handler.get_users_id(params)
 
-
-
-    def get_user_id_by_email(self, email,email_type=1):
+    def get_user_id_by_email(self, email, email_type=1):
         """
         通过email查询员工
         :param email: 邮箱
